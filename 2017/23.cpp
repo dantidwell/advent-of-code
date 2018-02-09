@@ -123,17 +123,6 @@ int main(int argc, char ** argv) {
         InstructionPointer++;
         break;
     }
-
-    if(D > 10000) {
-      std::cout << "IP: " << InstructionPointer+1 << ", ";
-      std::cout << "A: " << A << ", ";
-      std::cout << "B: " << B << ", ";
-      std::cout << "C: " << C << ", ";
-      std::cout << "D: " << D << ", ";
-      std::cout << "E: " << E << ", ";
-      std::cout << "F: " << F << ", ";
-      std::cout << "G: " << G << "\n";
-    }
   }
 
   // /* Print Debug Stats */
