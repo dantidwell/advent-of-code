@@ -29,7 +29,7 @@ INLINE_REQ Aoc::SimdOp8 II(const Aoc::SimdOp8 a, const Aoc::SimdOp8 b, const Aoc
 }
 
 /**
- * Md5EightWide - Uses AVX2 to simulatenously hash 8 sequences 
+ * Md5EightWide - Uses AVX2 to hash 8 sequences in parallel 
  * Input is a 16x8 array of uint32_t's holding the 8 sequences to be hashed
  * Output is a length 8 uint32_t array to hold the 8 hashes  
  */
