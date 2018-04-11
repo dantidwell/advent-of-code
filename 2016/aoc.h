@@ -17,13 +17,13 @@
 #define INLINE_OPT inline
 
 #ifdef _MSC_VER 
+  #define INLINE_REQ __forceinline
+  #define MEMALIGN(width) __declspec(align(width))
 #else 
   #define INLINE_REQ __attribute__((always_inline))
   #define MEMALIGN(width) __attribute__((aligned(width)))
 #endif
 
-#define INLINE_REQ __forceinline
-#define MEMALIGN(width) __declspec(align(width))
 namespace Aoc { 
   /**
    * SimdOp8 is an 8-word wide SIMD (AVX2) operand. Operators are overloaded using AVX2 simd intrinsics
