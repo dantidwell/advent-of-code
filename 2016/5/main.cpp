@@ -151,7 +151,7 @@ int main() {
   }
   auto endOne = std::chrono::high_resolution_clock::now();
   printf("Found password after %d iterations.  The password is %s.\n", indexOne.Index, passwordOne);
-  printf("Duration: %lld (ms)\n", (endOne-startOne).count() / 1000000);
+  printf("Duration: %ld (ms)\n", (endOne-startOne).count() / 1000000);
 
   /* Part Two */
   uint8_t passwordTwo[9] = { 0 };
@@ -178,7 +178,7 @@ int main() {
   }
   auto endTwo = std::chrono::high_resolution_clock::now();
   printf("Found password after %d iterations.  The password is %s.\n", indexTwo.Index, passwordTwo);
-  printf("Duration: %lld (ms)\n", (endTwo-startTwo).count() / 1000000);
+  printf("Duration: %ld (ms)\n", (endTwo-startTwo).count() / 1000000);
   
   return 0;
 }
