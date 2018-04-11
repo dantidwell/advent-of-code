@@ -3,7 +3,7 @@
 /**
  * MD5 Constants
  */
-MEMALIGN(64) uint32_t Md5TArray[64][8] = { 
+uint32_t Md5TArray[64][8] = { 
   { 0xd76aa478, 0xd76aa478, 0xd76aa478, 0xd76aa478, 0xd76aa478, 0xd76aa478, 0xd76aa478, 0xd76aa478 },
   { 0xe8c7b756, 0xe8c7b756, 0xe8c7b756, 0xe8c7b756, 0xe8c7b756, 0xe8c7b756, 0xe8c7b756, 0xe8c7b756 },
   { 0x242070db, 0x242070db, 0x242070db, 0x242070db, 0x242070db, 0x242070db, 0x242070db, 0x242070db },
@@ -227,14 +227,6 @@ static void IncrementEightWide(uint32_t Input[][8], IndexState &s) {
   /* increment the ones place and test for carry */
   auto lanes = Aoc::SimdOp8::Load(Input[w]) + Increment[b]; 
   auto carry = (lanes & CarryCmpMask[b]) > CarryLimit[b];
-  
-  /* CASE 1: No carry was needed after incrementing ones place, so store and bail */
-  if(carry == 0) { 
-    lanes.Store(Input[s.IndexStartWord]);
-    return;
-  }
-
-  /* CASE 2: We've overflowed the ones place in one or more lanes and need to "carry the one" */
   lanes = lanes - (carry & CarrySubMask[b]); //subtract 10 from places than needed to be carried
   lanes.Store(Input[w]);
   w = b == 0 ? w-1 : w;
