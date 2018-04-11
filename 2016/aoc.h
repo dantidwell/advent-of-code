@@ -32,10 +32,12 @@ namespace Aoc {
     static INLINE_REQ SimdOp8 Load(uint32_t *data) { 
       return SimdOp8(_mm256_load_si256((__m256i*) data));
     }  
+    
+    SimdOp8() : SimdOp8(0) {}
+    
+    SimdOp8(uint32_t val) : Data(_mm256_set1_epi32(val)) {}
 
     SimdOp8(const __m256i &data) : Data(data) { }
-
-    SimdOp8(uint32_t val) : Data(_mm256_set1_epi32(val)) {}
 
     INLINE_REQ void Store(uint32_t *memory) { 
       _mm256_store_si256((__m256i*) memory, this->Data);

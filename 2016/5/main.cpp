@@ -16,13 +16,13 @@ INLINE_REQ Aoc::SimdOp8 I(const Aoc::SimdOp8 x, const Aoc::SimdOp8 y, const Aoc:
   return y ^ (x | (~z));
 }
 INLINE_REQ Aoc::SimdOp8 FF(const Aoc::SimdOp8 a, const Aoc::SimdOp8 b, const Aoc::SimdOp8 c, const Aoc::SimdOp8 d, uint32_t *x, uint32_t t, uint32_t s) {
-  return b + (a + F(b, c, d) + Aoc::SimdOp8::Load(x) + Aoc::SimdOp8 (t)).RotateLeft(s);
+  return b + (a + F(b, c, d) + Aoc::SimdOp8::Load(x) + Aoc::SimdOp8(t)).RotateLeft(s);
 }
 INLINE_REQ Aoc::SimdOp8 GG(const Aoc::SimdOp8 a, const Aoc::SimdOp8 b, const Aoc::SimdOp8 c, const Aoc::SimdOp8 d, uint32_t *x, uint32_t t, uint32_t s) {
-  return b + (a + G(b, c, d) + Aoc::SimdOp8::Load(x) + Aoc::SimdOp8 (t)).RotateLeft(s);
+  return b + (a + G(b, c, d) + Aoc::SimdOp8::Load(x) + Aoc::SimdOp8(t)).RotateLeft(s);
 }
 INLINE_REQ Aoc::SimdOp8 HH(const Aoc::SimdOp8 a, const Aoc::SimdOp8 b, const Aoc::SimdOp8 c, const Aoc::SimdOp8 d, uint32_t *x, uint32_t t, uint32_t s) {
-  return b + (a + H(b, c, d) + Aoc::SimdOp8::Load(x) + Aoc::SimdOp8 (t)).RotateLeft(s);
+  return b + (a + H(b, c, d) + Aoc::SimdOp8::Load(x) + Aoc::SimdOp8(t)).RotateLeft(s);
 }
 INLINE_REQ Aoc::SimdOp8 II(const Aoc::SimdOp8 a, const Aoc::SimdOp8 b, const Aoc::SimdOp8 c, const Aoc::SimdOp8 d, uint32_t *x, uint32_t t, uint32_t s) {
   return b + (a + I(b, c, d) + Aoc::SimdOp8::Load(x) + Aoc::SimdOp8(t)).RotateLeft(s);
@@ -33,7 +33,7 @@ INLINE_REQ Aoc::SimdOp8 II(const Aoc::SimdOp8 a, const Aoc::SimdOp8 b, const Aoc
  * Input is a 16x8 array of uint32_t's holding the 8 sequences to be hashed
  * Output is a length 8 uint32_t array to hold the 8 hashes  
  */
-void Md5EightWide(uint32_t Input[][8], uint32_t *Output) {
+void Md5EightWide(uint32_t Input[][8], uint32_t *Output) {  
   const Aoc::SimdOp8 A(0x67452301);
   const Aoc::SimdOp8 B(0xefcdab89);
   const Aoc::SimdOp8 C(0x98badcfe);
@@ -131,18 +131,39 @@ struct IndexState {
  * IncrementEightWide increments the decimal index in place and ensures all 
  * padding needed by the md5 algorithm is in place
  */
+MEMALIGN(64) Aoc::SimdOp8 Increment[4];
+MEMALIGN(64) Aoc::SimdOp8 CarryLimit[4];
+MEMALIGN(64) Aoc::SimdOp8 CarryAddMask[4];
+MEMALIGN(64) Aoc::SimdOp8 CarryCmpMask[4];
+MEMALIGN(64) Aoc::SimdOp8 CarrySubMask[4];
+
+static void InitIncrement() { 
+  for(auto i = 0; i < 4; i++) { 
+    Increment[i] = 0x00000008 << (8*i); 
+  }
+  for(auto i = 0; i < 4; i++) { 
+    CarryLimit[i] = 0x00000039 << (8*i); 
+  }
+  for(auto i = 0; i < 4; i++) { 
+    CarryAddMask[i] = 0x00000001 << (8*i); 
+  }
+  for(auto i = 0; i < 4; i++) { 
+    CarryCmpMask[i] = 0x000000FF << (8*i);
+  }
+  for(auto i = 0; i < 4; i++) { 
+    CarrySubMask[i] = 0x0000000A << (8*i);
+  }
+}
+
 static void IncrementEightWide(uint32_t Input[][8], IndexState &s) { 
   s.Index += 8;
-
-  Aoc::SimdOp8 in(0x00000008 << 8*s.IndexStartByte);
-  Aoc::SimdOp8 m1(0x00000039 << 8*s.IndexStartByte);
-  Aoc::SimdOp8 m2(0x000000FF << 8*s.IndexStartByte); 
-  Aoc::SimdOp8 m3(0x0000000A << 8*s.IndexStartByte);
+  auto w = s.IndexStartWord;
+  auto b = s.IndexStartByte;
 
   /* increment the ones place and test for carry */
-  auto lanes = Aoc::SimdOp8::Load(Input[s.IndexStartWord]) + in; 
-  auto carry = (lanes & m2) > m1;
-
+  auto lanes = Aoc::SimdOp8::Load(Input[w]) + Increment[b]; 
+  auto carry = (lanes & CarryCmpMask[b]) > CarryLimit[b];
+  
   /* CASE 1: No carry was needed after incrementing ones place, so store and bail */
   if(carry == 0) { 
     lanes.Store(Input[s.IndexStartWord]);
@@ -150,32 +171,25 @@ static void IncrementEightWide(uint32_t Input[][8], IndexState &s) {
   }
 
   /* CASE 2: We've overflowed the ones place in one or more lanes and need to "carry the one" */
-  lanes = lanes - (carry & m3); //subtract 10 from places than needed to be carried
-  lanes.Store(Input[s.IndexStartWord]);
-  auto w = s.IndexStartByte == 0 ? s.IndexStartWord-1 : s.IndexStartWord;
-  auto b = s.IndexStartByte == 0 ? 3 : s.IndexStartByte - 1;
+  lanes = lanes - (carry & CarrySubMask[b]); //subtract 10 from places than needed to be carried
+  lanes.Store(Input[w]);
+  w = b == 0 ? w-1 : w;
+  b = b == 0 ? 3 : b-1;
   while (w >= 2) { 
-    Aoc::SimdOp8 m1(0x00000039 << 8*b);
-    Aoc::SimdOp8 m2(0x000000FF << 8*b); 
-    Aoc::SimdOp8 m3(0x0000000A << 8*b);
-    Aoc::SimdOp8 m4(0x00000001 << 8*b);
-
     /* distribute the carry down the rest of this word */  
     lanes = Aoc::SimdOp8::Load(Input[w]);
-    for(auto i = 0; i <= b; i++) {
-      lanes = lanes + (carry & m4); //carry the one to the next decimal place 
-      carry = (lanes & m2) > m1; //determine which overflowed and need to be carried
+    for(int32_t i = b; i >= 0; i--) {
+      lanes = lanes + (carry & CarryAddMask[i]); //carry the one to the next decimal place 
+      carry = (lanes & CarryCmpMask[i]) > CarryLimit[i]; //determine which overflowed and need to be carried
       /* no carry needed down the rest of this word, so store and bail */
       if(carry ==  0) { 
         lanes.Store(Input[w]);
         return;
       }
-      lanes = lanes - (carry & m3); //subtract 10 from places than needed to be carried
-      m1 = m1 >> 8, m2 = m2 >> 8, m3 = m3 >> 8, m4 = m4 >> 8;
+      lanes = lanes - (carry & CarrySubMask[i]); //subtract 10 from places than needed to be carried
     }
-
-    /* we carried off then end of a word, so store this word and load the next word */
     lanes.Store(Input[w--]);
+    /* we carried off then end of a word, so store this word and load the next word */
     b = 3;
   }
 
@@ -242,6 +256,8 @@ int main() {
   MEMALIGN(64) uint32_t Hashes[8] = { 0 };
   uint8_t Chars[16] = { '0','1','2','3','4','5','6','7','8','9','a', 'b', 'c', 'd', 'e', 'f'};
   
+  InitIncrement();
+
   /* Part One */
   uint8_t passwordOne[9] = { 0 };
   uint32_t charsFoundOne =  0;
