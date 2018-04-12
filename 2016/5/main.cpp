@@ -1,4 +1,4 @@
-#include "aoc.h"
+#include "../aoc.h"
 #include "md5.cpp"
 
 struct IndexState { 
