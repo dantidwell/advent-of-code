@@ -141,20 +141,21 @@ namespace Aoc {
   //     __m512i Data;
   // };
 
-  inline void ReadToDelimiter(FILE * stream, char * buffer, int bufferSize, char delimiter) { 
+  inline int32_t ReadToDelimiter(FILE * stream, char * buffer, int bufferSize, char delimiter) { 
     for(auto i = 0; i < bufferSize; i++) { 
       char c = getc(stream);
       if(c == delimiter) { 
         buffer[i] = '\0';
-        return;
-      } else if(c == '\0') { 
+        return i;
+      } else if(c == EOF) { 
         buffer[i] = '\0';
-        return;
+        return i;
       } else { 
         buffer[i] = c;
       }
     }
     buffer[bufferSize-1] = '\0';
+    return bufferSize;
   } 
 
   inline void EatWhiteSpace(FILE * stream) { 

@@ -10,7 +10,7 @@ if defined VSCMD_ENV_SET (
   call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
   SET VSCMD_ENV_SET=1
 ) 
-set compilerflags=/std:c++latest /O2 /Zi /EHsc /I ..\..\
+set compilerflags=/std:c++latest /Od /Zi /EHsc /I ..\..\
 set linkerflags=/Fe:%1.exe 
 
 copy ..\..\%1\%1.txt .\
