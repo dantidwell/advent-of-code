@@ -164,7 +164,6 @@ func main() {
 			symbolRes := symbols.Get(tokens[t+3].StringValue)
 			symbolRes.Expression = &ASTNotNode{symbol}
 			t = t + 4
-
 		} else if tokens[t+3].Type == TokenAssignment {
 			// assignment of binary expression
 			var symbolL ASTNode
