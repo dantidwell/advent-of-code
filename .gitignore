@@ -1,3 +1,4 @@
 bin/
 .vs/
 .vscode/
+2015/**/debug
