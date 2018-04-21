@@ -34,7 +34,39 @@ def part_one():
     return ring + r # heading away from an axis
 
 def part_two():
+  rings = 5
+  grid = [([0] * (2*rings-1)) for i in xrange(2*rings-1)]
   
+  c = rings - 1
+  grid[c][c] = 1
 
+  for ring in xrange(1, rings):
+    #Right side 
+    x = c+ring
+    for y in xrange(c+ring-1, c-ring-1, -1):
+      grid[y][x] = grid[y+1][x] + grid[y-1][x-1] + grid[y][x-1] + grid[y+1][x-1]
+      if grid[y][x] > puzzle_input: 
+        return grid[y][x]
+    #Top side 
+    y = c-ring
+    for x in xrange(c+ring-1, c-ring-1, -1):
+      grid[y][x] = grid[y][x+1] + grid[y+1][x-1] + grid[y+1][x] + grid[y+1][x+1]
+      if grid[y][x] > puzzle_input: 
+        return grid[y][x]
+
+    #Left side 
+    x = c-ring
+    for y in xrange(c-ring+1, c+ring+1, 1):
+      grid[y][x] = grid[y-1][x] + grid[y-1][x+1] + grid[y][x+1] + grid[y+1][x+1]
+      if grid[y][x] > puzzle_input: 
+        return grid[y][x]
+
+    #Bottom side 
+    y = c+ring
+    for x in xrange(c-ring+1, c+ring+1, 1):
+      grid[y][x] = grid[y][x-1] + grid[y-1][x-1] + grid[y-1][x] + grid[y-1][x+1]
+      if grid[y][x] > puzzle_input: 
+        return grid[y][x]
+  
 aoc.run(part_one, part_two)
 
